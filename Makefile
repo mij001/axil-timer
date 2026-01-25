@@ -27,7 +27,12 @@ regress: $(SIMDIR)/tb_axil_timer.vvp
 	  vvp $(SIMDIR)/tb_axil_timer.vvp +seed=$$s +ntrans=$(TNTRANS) | grep -E '^RESULT' | sed "s/^/seed $$s: /"; \
 	done
 
+waves: $(SIMDIR)/tb_axil_timer.vvp
+	@for sc in write_aw_first write_w_first write_same_cycle read_stall oneshot w1c_collision prescale_shrink; do \
+	  vvp $(SIMDIR)/tb_axil_timer.vvp +scenario=$$sc | grep WAVE_START | sed "s/^/$$sc /"; \
+	done
+
 clean:
 	rm -rf $(SIMDIR)
 
-.PHONY: all lint run regress clean
+.PHONY: all lint run regress waves clean
