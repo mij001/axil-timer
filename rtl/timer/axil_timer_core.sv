@@ -3,32 +3,32 @@
 // prescaler and down counter, spec section 4. no clock divider, tick is an enable
 
 module axil_timer_core (
-    input  wire        aclk,
-    input  wire        aresetn,
+    input  logic        aclk,
+    input  logic        aresetn,
 
     // from the register block
-    input  wire        en,
-    input  wire        periodic,
-    input  wire [15:0] prescale,
-    input  wire [31:0] load_reload,
-    input  wire        load_restart,
-    input  wire [31:0] load_value,
+    input  logic        en,
+    input  logic        periodic,
+    input  logic [15:0] prescale,
+    input  logic [31:0] load_reload,
+    input  logic        load_restart,
+    input  logic [31:0] load_value,
 
     // to the register block
-    output reg  [31:0] count,
-    output reg         expire       // one cycle: the timer expires now
+    output logic  [31:0] count,
+    output logic         expire       // one cycle: the timer expires now
 );
 
     // registers
-    reg [15:0] pre_q,   pre_d;
-    reg [31:0] count_q, count_d;
+    logic [15:0] pre_q,   pre_d;
+    logic [31:0] count_q, count_d;
 
     // named "now" helpers. plain gates
-    wire tick       = en & (pre_q >= prescale);
-    wire count_zero = (count_q == 32'd0);
+    logic tick       = en & (pre_q >= prescale);
+    logic count_zero = (count_q == 32'd0);
 
     //  ------------------------------------------------------------------------- Block
-    always @(posedge aclk or negedge aresetn) begin
+    always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
             pre_q   <= 16'd0;
             count_q <= 32'd0;
@@ -39,7 +39,7 @@ module axil_timer_core (
     end
 
     //  ------------------------------------------------------------------------- Block
-    always @(*) begin
+    always_comb begin
         pre_d   = pre_q;
         count_d = count_q;
 
@@ -65,7 +65,7 @@ module axil_timer_core (
     end
 
     //  ------------------------------------------------------------------------- Block
-    always @(*) begin
+    always_comb begin
         count = count_q;
     end
 

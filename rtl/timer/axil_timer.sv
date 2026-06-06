@@ -3,62 +3,62 @@
 // top. structure only, no logic
 
 module axil_timer #(
-    parameter integer ADDR_W = 12
+    parameter int ADDR_W = 12
 ) (
-    input  wire              aclk,
-    input  wire              aresetn,
+    input  logic              aclk,
+    input  logic              aresetn,
 
-    input  wire              s_axil_awvalid,
-    output wire              s_axil_awready,
-    input  wire [ADDR_W-1:0] s_axil_awaddr,
+    input  logic              s_axil_awvalid,
+    output logic              s_axil_awready,
+    input  logic [ADDR_W-1:0] s_axil_awaddr,
     /* verilator lint_off UNUSEDSIGNAL */
-    input  wire [2:0]        s_axil_awprot,   // not used, spec section 6
+    input  logic [2:0]        s_axil_awprot,   // not used, spec section 6
     /* verilator lint_on UNUSEDSIGNAL */
 
-    input  wire              s_axil_wvalid,
-    output wire              s_axil_wready,
-    input  wire [31:0]       s_axil_wdata,
-    input  wire [3:0]        s_axil_wstrb,
+    input  logic              s_axil_wvalid,
+    output logic              s_axil_wready,
+    input  logic [31:0]       s_axil_wdata,
+    input  logic [3:0]        s_axil_wstrb,
 
-    output wire              s_axil_bvalid,
-    input  wire              s_axil_bready,
-    output wire [1:0]        s_axil_bresp,
+    output logic              s_axil_bvalid,
+    input  logic              s_axil_bready,
+    output logic [1:0]        s_axil_bresp,
 
-    input  wire              s_axil_arvalid,
-    output wire              s_axil_arready,
-    input  wire [ADDR_W-1:0] s_axil_araddr,
+    input  logic              s_axil_arvalid,
+    output logic              s_axil_arready,
+    input  logic [ADDR_W-1:0] s_axil_araddr,
     /* verilator lint_off UNUSEDSIGNAL */
-    input  wire [2:0]        s_axil_arprot,   // not used, spec section 6
+    input  logic [2:0]        s_axil_arprot,   // not used, spec section 6
     /* verilator lint_on UNUSEDSIGNAL */
 
-    output wire              s_axil_rvalid,
-    input  wire              s_axil_rready,
-    output wire [31:0]       s_axil_rdata,
-    output wire [1:0]        s_axil_rresp,
+    output logic              s_axil_rvalid,
+    input  logic              s_axil_rready,
+    output logic [31:0]       s_axil_rdata,
+    output logic [1:0]        s_axil_rresp,
 
-    output wire              irq
+    output logic              irq
 );
 
-    wire              reg_wr;
-    wire [ADDR_W-1:0] reg_waddr;
-    wire [31:0]       reg_wdata;
-    wire [3:0]        reg_wstrb;
-    wire              reg_werr;
+    logic reg_wr;
+    logic [ADDR_W-1:0] reg_waddr;
+    logic [31:0]       reg_wdata;
+    logic [3:0]        reg_wstrb;
+    logic reg_werr;
     /* verilator lint_off UNUSEDSIGNAL */
-    wire              reg_rd;       // the timer has no read side effects
+    logic reg_rd;       // the timer has no read side effects
     /* verilator lint_on UNUSEDSIGNAL */
-    wire [ADDR_W-1:0] reg_raddr;
-    wire [31:0]       reg_rdata;
-    wire              reg_rerr;
+    logic [ADDR_W-1:0] reg_raddr;
+    logic [31:0]       reg_rdata;
+    logic reg_rerr;
 
-    wire              ctrl_en;
-    wire              ctrl_periodic;
-    wire [15:0]       prescale;
-    wire [31:0]       load_reload;
-    wire              load_restart;
-    wire [31:0]       load_value;
-    wire [31:0]       core_count;
-    wire              core_expire;
+    logic ctrl_en;
+    logic ctrl_periodic;
+    logic [15:0]       prescale;
+    logic [31:0]       load_reload;
+    logic load_restart;
+    logic [31:0]       load_value;
+    logic [31:0]       core_count;
+    logic core_expire;
 
     axil_reg_bus #(.ADDR_W(ADDR_W)) u_bus (
         .aclk           (aclk),

@@ -3,34 +3,34 @@
 // the register map. every collision rule is a row in docs/axil_timer_decisions.md
 
 module axil_timer_regs #(
-    parameter integer ADDR_W = 12
+    parameter int ADDR_W = 12
 ) (
-    input  wire              aclk,
-    input  wire              aresetn,
+    input  logic              aclk,
+    input  logic              aresetn,
 
     // register bus from the AXI4-Lite front end
-    input  wire              reg_wr,
-    input  wire [ADDR_W-1:0] reg_waddr,
-    input  wire [31:0]       reg_wdata,
-    input  wire [3:0]        reg_wstrb,
-    output reg               reg_werr,
-    input  wire [ADDR_W-1:0] reg_raddr,
-    output reg  [31:0]       reg_rdata,
-    output reg               reg_rerr,
+    input  logic              reg_wr,
+    input  logic [ADDR_W-1:0] reg_waddr,
+    input  logic [31:0]       reg_wdata,
+    input  logic [3:0]        reg_wstrb,
+    output logic               reg_werr,
+    input  logic [ADDR_W-1:0] reg_raddr,
+    output logic  [31:0]       reg_rdata,
+    output logic               reg_rerr,
 
     // from the counter core
-    input  wire [31:0]       core_count,
-    input  wire              core_expire,     // one cycle: the timer expires now
+    input  logic [31:0]       core_count,
+    input  logic              core_expire,     // one cycle: the timer expires now
 
     // to the counter core
-    output reg               ctrl_en,
-    output reg               ctrl_periodic,
-    output reg  [15:0]       prescale,
-    output reg  [31:0]       load_reload,     // LOAD register, for periodic reload
-    output reg               load_restart,    // same cycle: restart the count
-    output reg  [31:0]       load_value,      // same cycle: the value to restart from
+    output logic               ctrl_en,
+    output logic               ctrl_periodic,
+    output logic  [15:0]       prescale,
+    output logic  [31:0]       load_reload,     // LOAD register, for periodic reload
+    output logic               load_restart,    // same cycle: restart the count
+    output logic  [31:0]       load_value,      // same cycle: the value to restart from
 
-    output reg               irq
+    output logic               irq
 );
 
     localparam [ADDR_W-1:0] OFF_CTRL     = {{(ADDR_W-8){1'b0}}, 8'h00};
@@ -40,31 +40,31 @@ module axil_timer_regs #(
     localparam [ADDR_W-1:0] OFF_PRESCALE = {{(ADDR_W-8){1'b0}}, 8'h10};
 
     // registers
-    reg        en_q,       en_d;
-    reg        periodic_q, periodic_d;
-    reg        irq_en_q,   irq_en_d;
-    reg [31:0] load_q,     load_d;
-    reg [15:0] prescale_q, prescale_d;
-    reg        expired_q,  expired_d;
+    logic en_q,       en_d;
+    logic periodic_q, periodic_d;
+    logic irq_en_q,   irq_en_d;
+    logic [31:0] load_q,     load_d;
+    logic [15:0] prescale_q, prescale_d;
+    logic expired_q,  expired_d;
 
     // named "now" helpers. plain gates
-    wire [31:0] wmask = {{8{reg_wstrb[3]}}, {8{reg_wstrb[2]}},
+    logic [31:0] wmask = {{8{reg_wstrb[3]}}, {8{reg_wstrb[2]}},
                          {8{reg_wstrb[1]}}, {8{reg_wstrb[0]}}};
 
-    wire wr_ctrl     = reg_wr & (reg_waddr == OFF_CTRL);
-    wire wr_load     = reg_wr & (reg_waddr == OFF_LOAD);
-    wire wr_status   = reg_wr & (reg_waddr == OFF_STATUS);
-    wire wr_prescale = reg_wr & (reg_waddr == OFF_PRESCALE);
+    logic wr_ctrl     = reg_wr & (reg_waddr == OFF_CTRL);
+    logic wr_load     = reg_wr & (reg_waddr == OFF_LOAD);
+    logic wr_status   = reg_wr & (reg_waddr == OFF_STATUS);
+    logic wr_prescale = reg_wr & (reg_waddr == OFF_PRESCALE);
 
     // values the registers would take if this write were applied, byte by byte
-    wire [31:0] load_merged     = (load_q & ~wmask) | (reg_wdata & wmask);
-    wire [15:0] prescale_merged = (prescale_q & ~wmask[15:0]) | (reg_wdata[15:0] & wmask[15:0]);
+    logic [31:0] load_merged     = (load_q & ~wmask) | (reg_wdata & wmask);
+    logic [15:0] prescale_merged = (prescale_q & ~wmask[15:0]) | (reg_wdata[15:0] & wmask[15:0]);
 
     // software asks to clear EXPIRED this cycle
-    wire w1c_expired = wr_status & reg_wstrb[0] & reg_wdata[0];
+    logic w1c_expired = wr_status & reg_wstrb[0] & reg_wdata[0];
 
     //  ------------------------------------------------------------------------- Block
-    always @(posedge aclk or negedge aresetn) begin
+    always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
             en_q       <= 1'b0;
             periodic_q <= 1'b0;
@@ -83,7 +83,7 @@ module axil_timer_regs #(
     end
 
     //  ------------------------------------------------------------------------- Block
-    always @(*) begin
+    always_comb begin
         // next values. defaults: hold
         en_d       = en_q;
         periodic_d = periodic_q;
@@ -139,7 +139,7 @@ module axil_timer_regs #(
     end
 
     //  ------------------------------------------------------------------------- Block
-    always @(*) begin
+    always_comb begin
         ctrl_en       = en_q;
         ctrl_periodic = periodic_q;
         prescale      = prescale_q;
