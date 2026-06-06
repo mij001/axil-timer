@@ -71,7 +71,7 @@ module axil_checker #(
 
     always @(posedge aclk) begin
         if (!aresetn) begin
-            //  A3.1.2: during reset masters drive ARVALID, AWVALID, WVALID low, and
+            // a3.1.2: during reset a master drives its VALIDs low
             if (awvalid !== 1'b0) fail("AWVALID not low during reset");
             if (wvalid  !== 1'b0) fail("WVALID not low during reset");
             if (arvalid !== 1'b0) fail("ARVALID not low during reset");
@@ -85,11 +85,11 @@ module axil_checker #(
             if (!is01(arvalid) || !is01(arready)) fail("AR handshake signal is X");
             if (!is01(rvalid)  || !is01(rready))  fail("R handshake signal is X");
 
-            //  A3.1.2 and Figure A3-1: earliest master VALID is at an edge after the
+            // a3.1.2 and figure A3-1: earliest master VALID is the edge after reset
             if (rst_p && (awvalid === 1'b1 || wvalid === 1'b1 || arvalid === 1'b1))
                 fail("master VALID high on the first edge after reset");
 
-            //  A3.2.2: once asserted, VALID stays asserted until the edge after READY.
+            // a3.2.2: once asserted, VALID stays asserted until the edge after READY.
             if (!rst_p) begin
                 if (awvalid_p && !awready_p) begin
                     if (awvalid !== 1'b1) fail("AWVALID dropped before handshake");
@@ -118,15 +118,15 @@ module axil_checker #(
                 end
             end
 
-            //  A3.3.1, AXI4 write response dependency: BVALID only after both the AW
+            // a3.3.1, AXI4 write response dependency: BVALID only after both the AW
             if (bvalid === 1'b1 && (n_aw <= n_b || n_w <= n_b))
                 fail("BVALID before both AW and W handshakes");
 
-            // A3.3.1, read dependency: RVALID only after the AR handshake
+            // a3.3.1, read dependency: RVALID only after the AR handshake
             if (rvalid === 1'b1 && n_ar <= n_r)
                 fail("RVALID before the AR handshake");
 
-            // B1.1.1: EXOKAY is not supported on AXI4-Lite
+            // b1.1.1: EXOKAY is not supported on AXI4-Lite
             if (bvalid === 1'b1 && bresp === 2'b01) fail("BRESP is EXOKAY");
             if (rvalid === 1'b1 && rresp === 2'b01) fail("RRESP is EXOKAY");
 

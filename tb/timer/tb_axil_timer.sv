@@ -53,7 +53,7 @@ module tb_axil_timer;
         .reg_wdata(u_dut.reg_wdata), .reg_wstrb(u_dut.reg_wstrb)
     );
 
-    //  -------------------------------------------------------------------------
+    // bookkeeping
     integer seed, ntrans, max_dly, cyc, errors, model_mismatches;
     integer aw_dly_force, w_dly_force, b_dly_force, ar_dly_force, r_dly_force;
     integer aw_hs_cyc, w_hs_cyc, rd_hs_cyc, n_writes, n_reads;
@@ -68,7 +68,7 @@ module tb_axil_timer;
     reg     irq_prev;
     integer cov_aw_throttled, cov_w_throttled, cov_ar_throttled, cov_aw_during_b;
 
-    //  bus monitor queues. filled at AXI handshakes, emptied when a write is applied
+    // bus monitor queues. filled at AXI handshakes, emptied when a write is applied
     reg [ADDR_W-1:0] mq_aw [0:8191];   // accepted write addresses, in order
     reg [35:0]       mq_w  [0:8191];   // accepted {strobes, data}, in order
     reg [1:0]        mq_b  [0:8191];   // expected BRESP, in order
@@ -95,7 +95,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  ------------------------------------------------------------------------- Every
+    // every cycle: compare DUT state with the model, and collect coverage sampled at
     always @(posedge aclk) begin
         if (aresetn) cyc = cyc + 1;
     end
@@ -135,7 +135,7 @@ module tb_axil_timer;
         end
     end
 
-    //  ------------------------------------------------------------------------- Bus
+    // bus monitor and bus coverage. sampled at the RISING edge, like the checker. the
     always @(posedge aclk) begin
         if (aresetn) begin
             if (bvalid  && !bready)  cov_b_stall      = cov_b_stall + 1;
@@ -147,7 +147,7 @@ module tb_axil_timer;
             if (arvalid && arready && u_dut.reg_wr && araddr == u_dut.reg_waddr)
                 cov_read_write_same = cov_read_write_same + 1;
 
-            //  a write applied on the register bus must be the oldest write accepted
+            // a write applied on the register bus must be the oldest write accepted
             if (u_dut.reg_wr) begin
                 if (mq_aw_head == mq_aw_tail || mq_w_head == mq_w_tail) begin
                     $display("[%0t] MONITOR FAIL: a write was applied that AXI never delivered", $time);
@@ -191,7 +191,7 @@ module tb_axil_timer;
                 end
             end
 
-            //  the expected read answer is taken from the model at the AR handshake
+            // the expected read answer is taken from the model at the AR handshake
             if (arvalid && arready) begin
                 mq_r[mq_r_tail % 8192] = u_model.read(araddr);
                 mq_r_tail = mq_r_tail + 1;
@@ -214,7 +214,7 @@ module tb_axil_timer;
         end
     end
 
-    //  -------------------------------------------------------------------------
+    // AXI4-Lite master BFM. everything is driven at the falling edge. READY outputs
     task axi_write;
         input [ADDR_W-1:0] a;
         input [31:0]       d;
@@ -342,7 +342,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  cycles until the model expects an expiry, counted from the cycle in progress (0
+    // cycles until the model expects an expiry, counted from the cycle in progress (0
     function integer cycles_to_expire;
         input dummy;
         integer t;
@@ -355,7 +355,7 @@ module tb_axil_timer;
         end
     endfunction
 
-    //  land a full-strobe write on exactly the cycle the timer expires. the write is
+    // land a full-strobe write on exactly the cycle the timer expires the write is
     task write_on_expiry;
         input [ADDR_W-1:0] a;
         input [31:0]       d;
@@ -372,7 +372,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  -------------------------------------------------------------------------
+    // directed tests. one per question in the decisions log
     task test_reset_values;
         begin
             axi_read(A_CTRL, v);     expect32(v, 32'h0, "reset CTRL");
@@ -539,7 +539,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  -------------------------------------------------------------------------
+    // outstanding transactions. AXI4-Lite allows several transactions to be in flight
     task send_write_only;
         input [ADDR_W-1:0] a;
         input [31:0]       d;
@@ -629,7 +629,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  -------------------------------------------------------------------------
+    // random test
     function [ADDR_W-1:0] pick_addr;
         input dummy;
         integer k;
@@ -690,7 +690,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  ------------------------------------------------------------------------- Short
+    // short scenarios, used only to draw timing diagrams
     task run_scenario;
         begin
             $sformat(vcdname, "sim/timer_%0s.vcd", scenario);
@@ -733,7 +733,7 @@ module tb_axil_timer;
         end
     endtask
 
-    //  ------------------------------------------------------------------------- Main
+    // main
     task report_and_finish;
         integer holes;
         begin
