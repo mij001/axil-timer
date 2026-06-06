@@ -24,10 +24,12 @@ module axil_timer_core (
     logic [31:0] count_q, count_d;
 
     // named "now" helpers. plain gates
-    logic tick       = en & (pre_q >= prescale);
-    logic count_zero = (count_q == 32'd0);
+    logic tick;
+    assign tick = en & (pre_q >= prescale);
+    logic count_zero;
+    assign count_zero = (count_q == 32'd0);
 
-    //  ------------------------------------------------------------------------- Block
+    // b1
     always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
             pre_q   <= 16'd0;
@@ -38,12 +40,12 @@ module axil_timer_core (
         end
     end
 
-    //  ------------------------------------------------------------------------- Block
+    // b2
     always_comb begin
         pre_d   = pre_q;
         count_d = count_q;
 
-        //  the expiry is a fact about this cycle. it does not depend on whether
+        // the expiry is a fact about this cycle. it does not depend on whether
         expire = tick & count_zero;
 
         if (load_restart) begin
@@ -64,7 +66,7 @@ module axil_timer_core (
         end
     end
 
-    //  ------------------------------------------------------------------------- Block
+    // b3
     always_comb begin
         count = count_q;
     end

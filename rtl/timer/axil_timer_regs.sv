@@ -48,22 +48,30 @@ module axil_timer_regs #(
     logic expired_q,  expired_d;
 
     // named "now" helpers. plain gates
-    logic [31:0] wmask = {{8{reg_wstrb[3]}}, {8{reg_wstrb[2]}},
+    logic [31:0] wmask;
+    assign wmask = {{8{reg_wstrb[3]}}, {8{reg_wstrb[2]}},
                          {8{reg_wstrb[1]}}, {8{reg_wstrb[0]}}};
 
-    logic wr_ctrl     = reg_wr & (reg_waddr == OFF_CTRL);
-    logic wr_load     = reg_wr & (reg_waddr == OFF_LOAD);
-    logic wr_status   = reg_wr & (reg_waddr == OFF_STATUS);
-    logic wr_prescale = reg_wr & (reg_waddr == OFF_PRESCALE);
+    logic wr_ctrl;
+    assign wr_ctrl = reg_wr & (reg_waddr == OFF_CTRL);
+    logic wr_load;
+    assign wr_load = reg_wr & (reg_waddr == OFF_LOAD);
+    logic wr_status;
+    assign wr_status = reg_wr & (reg_waddr == OFF_STATUS);
+    logic wr_prescale;
+    assign wr_prescale = reg_wr & (reg_waddr == OFF_PRESCALE);
 
     // values the registers would take if this write were applied, byte by byte
-    logic [31:0] load_merged     = (load_q & ~wmask) | (reg_wdata & wmask);
-    logic [15:0] prescale_merged = (prescale_q & ~wmask[15:0]) | (reg_wdata[15:0] & wmask[15:0]);
+    logic [31:0] load_merged;
+    assign load_merged = (load_q & ~wmask) | (reg_wdata & wmask);
+    logic [15:0] prescale_merged;
+    assign prescale_merged = (prescale_q & ~wmask[15:0]) | (reg_wdata[15:0] & wmask[15:0]);
 
     // software asks to clear EXPIRED this cycle
-    logic w1c_expired = wr_status & reg_wstrb[0] & reg_wdata[0];
+    logic w1c_expired;
+    assign w1c_expired = wr_status & reg_wstrb[0] & reg_wdata[0];
 
-    //  ------------------------------------------------------------------------- Block
+    // b1
     always_ff @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
             en_q       <= 1'b0;
@@ -82,7 +90,7 @@ module axil_timer_regs #(
         end
     end
 
-    //  ------------------------------------------------------------------------- Block
+    // b2
     always_comb begin
         // next values. defaults: hold
         en_d       = en_q;
@@ -92,7 +100,7 @@ module axil_timer_regs #(
         prescale_d = prescale_q;
         expired_d  = expired_q;
 
-        //  CTRL. all three fields live in byte 0. a CTRL write wins over a one-shot
+        // CTRL. all three fields live in byte 0. a CTRL write wins over a one-shot
         if (wr_ctrl && reg_wstrb[0]) begin
             en_d       = reg_wdata[0];
             periodic_d = reg_wdata[1];
@@ -115,7 +123,7 @@ module axil_timer_regs #(
         else if (w1c_expired)
             expired_d = 1'b0;
 
-        //  same-cycle commands to the core. a LOAD write with no strobes set is not a
+        // same-cycle commands to the core. no strobes set is not a load
         load_restart = wr_load & (|reg_wstrb);
         load_value   = load_merged;
 
@@ -138,7 +146,7 @@ module axil_timer_regs #(
         endcase
     end
 
-    //  ------------------------------------------------------------------------- Block
+    // b3
     always_comb begin
         ctrl_en       = en_q;
         ctrl_periodic = periodic_q;
