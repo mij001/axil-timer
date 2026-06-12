@@ -14,8 +14,13 @@ module tb_axil_timer;
     localparam [ADDR_W-1:0] A_PRESCALE = 12'h010;
 
     reg aclk    = 1'b0;
-    reg aresetn = 1'b0;
     always #5 aclk = ~aclk;
+
+    // reset starts HIGH then goes low, on purpose it used to start low. an async
+    reg aresetn = 1'b1;
+    initial begin
+        #1 aresetn = 1'b0;
+    end
 
     // master side of the bus, driven by the BFM
     reg              awvalid = 1'b0;  reg [ADDR_W-1:0] awaddr = 0;  reg [2:0] awprot = 0;
@@ -135,7 +140,7 @@ module tb_axil_timer;
         end
     end
 
-    // bus monitor and bus coverage. sampled at the RISING edge, like the checker. the
+    // bus monitor and coverage, sampled at the rising edge like the checker
     always @(posedge aclk) begin
         if (aresetn) begin
             if (bvalid  && !bready)  cov_b_stall      = cov_b_stall + 1;
@@ -355,7 +360,7 @@ module tb_axil_timer;
         end
     endfunction
 
-    // land a full-strobe write on exactly the cycle the timer expires the write is
+    // a full-strobe write landing on the cycle the timer expires
     task write_on_expiry;
         input [ADDR_W-1:0] a;
         input [31:0]       d;
