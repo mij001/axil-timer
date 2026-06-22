@@ -24,7 +24,11 @@ module axil_sva #(
 
     input logic              rvalid,  rready,
     input logic [31:0]       rdata,
-    input logic [1:0]        rresp
+    input logic [1:0]        rresp,
+
+    // the slave's own occupancy, for the independence rule below
+    input logic              aw_full,
+    input logic              w_full
 );
 
     // reset. every VALID is low while aresetn is low. a3.1.2
@@ -87,15 +91,16 @@ module axil_sva #(
         rvalid |-> !$isunknown({rdata, rresp}))
         else $error("%s: X in the read payload while RVALID is high", NAME);
 
-    // a slave must not wait for the other half of a write before taking the half it
+    // a slave must not wait for the other half of a write
     a_aw_independent: assert property (@(posedge aclk) disable iff (!aresetn)
-        (awvalid && !wvalid) |-> ##[0:3] awready)
-        else $error("%s: AWREADY appears to be waiting for WVALID", NAME);
+        (awvalid && !wvalid && !aw_full) |-> awready)
+        else $error("%s: AWREADY low with an empty slot and no WVALID", NAME);
 
     a_w_independent: assert property (@(posedge aclk) disable iff (!aresetn)
-        (wvalid && !awvalid) |-> ##[0:3] wready)
-        else $error("%s: WREADY appears to be waiting for AWVALID", NAME);
+        (wvalid && !awvalid && !w_full) |-> wready)
+        else $error("%s: WREADY low with an empty slot and no AWVALID", NAME);
 
+    // cover. an assertion that never fails proves nothing if the case never happened,
     c_aw_before_w: cover property (@(posedge aclk) disable iff (!aresetn)
         (awvalid && awready && !(wvalid && wready)) ##[1:8] (wvalid && wready));
 
@@ -135,5 +140,6 @@ bind axil_reg_bus axil_sva #(
     .bvalid  (s_axil_bvalid),  .bready  (s_axil_bready),  .bresp  (s_axil_bresp),
     .arvalid (s_axil_arvalid), .arready (s_axil_arready), .araddr (s_axil_araddr),
     .rvalid  (s_axil_rvalid),  .rready  (s_axil_rready),  .rdata  (s_axil_rdata),
-    .rresp   (s_axil_rresp)
+    .rresp   (s_axil_rresp),
+    .aw_full (aw_full_q),      .w_full  (w_full_q)
 );
