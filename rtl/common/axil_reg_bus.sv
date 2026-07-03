@@ -150,8 +150,9 @@ module axil_reg_bus #(
         end
 
         // write response channel. b_hs and wr_go cannot both be true
-        if (b_hs)
+        if (b_hs) begin
             bvalid_d = 1'b0;
+        end
 
         // read address channel. look up and capture the answer on handshake
         if (ar_hs) begin
@@ -161,8 +162,9 @@ module axil_reg_bus #(
         end
 
         // read data channel. ar_hs needs rvalid_q low and r_hs needs it high
-        if (r_hs)
+        if (r_hs) begin
             rvalid_d = 1'b0;
+        end
     end
 
     // b3
